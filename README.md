@@ -1,2 +1,2 @@
-# Checkers-With-AI
-A checkers game with some basic AI. The AI works by checking every move possible, assigning a weight to each move, then taking the move with the highest weight. If more than one move has the highest weight, then one of the moves will be randomly selected. This guarantees that the game will be random and makes the AI less predictable.
+# Java Checkers
+A checkers game with a simple computer player. The computer player works by assigning a weight for each move. When a move weight is calculated, it is based off information such as move safety (e.g. if the move results in the checker being taken by the other player, it is less likely to make that move). It checks a number of other factors and assigns a final weight. The move with the highest weight is chosen as the move. To ensure the AI is less predictable, if multiple moves have the same weight then one is randomly chosen.
