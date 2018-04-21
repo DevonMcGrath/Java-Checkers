@@ -119,7 +119,7 @@ public class CheckerBoard extends JButton {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				player.updateGame(game);
+				getCurrentPlayer().updateGame(game);
 				timer.stop();
 				update();
 			}
