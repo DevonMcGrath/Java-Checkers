@@ -31,6 +31,10 @@ public class Game {
 		restart();
 	}
 	
+	public Game(String state) {
+		setGameState(state);
+	}
+	
 	public Game(Board board, boolean isP1Turn, int skipIndex) {
 		this.board = (board == null)? new Board() : board;
 		this.isP1Turn = isP1Turn;
@@ -179,5 +183,65 @@ public class Game {
 	
 	public int getSkipIndex() {
 		return skipIndex;
+	}
+	
+	/**
+	 * Gets the current game state as a string of data that can be parsed by
+	 * {@link #setGameState(String)}.
+	 * 
+	 * @return a string representing the current game state.
+	 * @see {@link #setGameState(String)}
+	 */
+	public String getGameState() {
+		
+		// Add the game board
+		String state = "";
+		for (int i = 0; i < 32; i ++) {
+			state += "" + board.get(i);
+		}
+		
+		// Add the other info
+		state += (isP1Turn? "1" : "0");
+		state += skipIndex;
+		
+		return state;
+	}
+	
+	/**
+	 * Parses a string representing a game state that was generated from
+	 * {@link #getGameState()}.
+	 * 
+	 * @param state	the game state.
+	 * @see {@link #getGameState()}
+	 */
+	public void setGameState(String state) {
+		
+		restart();
+		
+		// Trivial cases
+		if (state == null || state.isEmpty()) {
+			return;
+		}
+		
+		// Update the board
+		int n = state.length();
+		for (int i = 0; i < 32 && i < n; i ++) {
+			try {
+				int id = Integer.parseInt("" + state.charAt(i));
+				this.board.set(i, id);
+			} catch (NumberFormatException e) {}
+		}
+		
+		// Update the other info
+		if (n > 32) {
+			this.isP1Turn = (state.charAt(32) == '1');
+		}
+		if (n > 33) {
+			try {
+				this.skipIndex = Integer.parseInt(state.substring(33));
+			} catch (NumberFormatException e) {
+				this.skipIndex = -1;
+			}
+		}
 	}
 }

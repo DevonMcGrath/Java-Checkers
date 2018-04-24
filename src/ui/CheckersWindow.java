@@ -12,6 +12,9 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 import model.Player;
+import network.CheckersNetworkHandler;
+import network.ConnectionListener;
+import network.Session;
 
 /**
  * The {@code CheckersWindow} class is responsible for managing a window. This
@@ -34,6 +37,12 @@ public class CheckersWindow extends JFrame {
 	/** The checker board component playing the updatable game. */
 	private CheckerBoard board;
 	
+	private OptionPanel opts;
+	
+	private Session session1;
+	
+	private Session session2;
+	
 	public CheckersWindow() {
 		this(DEFAULT_WIDTH, DEFAULT_HEIGHT, DEFAULT_TITLE);
 	}
@@ -54,12 +63,25 @@ public class CheckersWindow extends JFrame {
 		// Setup the components
 		JPanel layout = new JPanel(new BorderLayout());
 		this.board = new CheckerBoard(this);
-		OptionPanel options = new OptionPanel(this);
+		this.opts = new OptionPanel(this);
 		layout.add(board, BorderLayout.CENTER);
-		layout.add(options, BorderLayout.SOUTH);
+		layout.add(opts, BorderLayout.SOUTH);
 		this.add(layout);
+		
+		// Setup the network listeners
+		CheckersNetworkHandler session1Handler, session2Handler;
+		session1Handler = new CheckersNetworkHandler(true, this, board, opts);
+		session2Handler = new CheckersNetworkHandler(false, this, board, opts);
+		this.session1 = new Session(new ConnectionListener(
+				0, session1Handler), null, null, -1);
+		this.session2 = new Session(new ConnectionListener(
+				0, session2Handler), null, null, -1);
 	}
 	
+	public CheckerBoard getBoard() {
+		return board;
+	}
+
 	/**
 	 * Updates the type of player that is being used for player 1.
 	 * 
@@ -86,5 +108,17 @@ public class CheckersWindow extends JFrame {
 	public void restart() {
 		this.board.getGame().restart();
 		this.board.update();
+	}
+	
+	public void setGameState(String state) {
+		this.board.getGame().setGameState(state);
+	}
+	
+	public Session getSession1() {
+		return session1;
+	}
+
+	public Session getSession2() {
+		return session2;
 	}
 }

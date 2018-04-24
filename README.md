@@ -5,5 +5,5 @@ A checkers game with a simple computer player. The computer player works by assi
 ## Compile and Run
 ### Manual
 1. In terminal/command prompt, navigate to `src/`
-1. Compile with `javac ui/*.java model/*.java logic/*.java`
+1. Compile with `javac ui/*.java model/*.java logic/*.java network/*.java`
 1. Run with `java ui.Main`

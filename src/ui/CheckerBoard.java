@@ -16,6 +16,7 @@ import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -25,7 +26,10 @@ import logic.MoveGenerator;
 import model.Board;
 import model.Game;
 import model.HumanPlayer;
+import model.NetworkPlayer;
 import model.Player;
+import network.Command;
+import network.Session;
 
 /**
  * The {@code CheckerBoard} class is a graphical user interface component that
@@ -104,15 +108,17 @@ public class CheckerBoard extends JButton {
 	 * Checks if the game is over and redraws the component graphics.
 	 */
 	public void update() {
-		runPlayer(getCurrentPlayer());
+		runPlayer();
 		this.isGameOver = game.isGameOver();
 		repaint();
 	}
 	
-	private void runPlayer(Player player) {
+	private void runPlayer() {
 		
 		// Nothing to do
-		if (player == null || player.isHuman()) {
+		Player player = getCurrentPlayer();
+		if (player == null || player.isHuman() ||
+				player instanceof NetworkPlayer) {
 			return;
 		}
 		
@@ -123,11 +129,57 @@ public class CheckerBoard extends JButton {
 			public void actionPerformed(ActionEvent e) {
 				getCurrentPlayer().updateGame(game);
 				timer.stop();
+				updateNetwork();
 				update();
 			}
-			
 		});
 		this.timer.start();
+	}
+	
+	public void updateNetwork() {
+		
+		// Get the relevant sessions to send to
+		List<Session> sessions = new ArrayList<>();
+		if (player1 instanceof NetworkPlayer) {
+			sessions.add(window.getSession1());
+		}
+		if (player2 instanceof NetworkPlayer) {
+			sessions.add(window.getSession2());
+		}
+		
+		// Send the game update
+		for (Session s : sessions) {
+			sendGameState(s);
+		}
+	}
+	
+	public synchronized boolean setGameState(boolean testValue,
+			String newState, String expected) {
+		
+		// Test the value if requested
+		if (testValue && !game.getGameState().equals(expected)) {
+			return false;
+		}
+		
+		// Update the game state
+		this.game.setGameState(newState);
+		repaint();
+		
+		return true;
+	}
+	
+	public void sendGameState(Session s) {
+
+		if (s == null) {
+			return;
+		}
+		
+		// Create the command and send it
+		Command update = new Command(Command.COMMAND_UPDATE,
+				s.getSid(), game.getGameState());
+		String host = s.getDestinationHost();
+		int port = s.getDestinationPort();
+		update.send(host, port);
 	}
 	
 	/**
@@ -140,6 +192,7 @@ public class CheckerBoard extends JButton {
 		Graphics2D g2d = (Graphics2D) g;
 		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
 				RenderingHints.VALUE_ANTIALIAS_ON);
+		Game game = this.game.copy();
 		
 		// Perform calculations
 		final int BOX_PADDING = 4;
@@ -344,6 +397,8 @@ public class CheckerBoard extends JButton {
 			return;
 		}
 		
+		Game copy = game.copy();
+		
 		// Determine what square (if any) was selected
 		final int W = getWidth(), H = getHeight();
 		final int DIM = W < H? W : H, BOX_SIZE = (DIM - 2 * PADDING) / 8;
@@ -355,9 +410,15 @@ public class CheckerBoard extends JButton {
 		
 		// Determine if a move should be attempted
 		if (Board.isValidPoint(sel) && Board.isValidPoint(selected)) {
-			boolean change = game.isP1Turn();
-			game.move(selected, sel);
-			change = (game.isP1Turn() != change);
+			boolean change = copy.isP1Turn();
+			String expected = copy.getGameState();
+			boolean move = copy.move(selected, sel);
+			boolean updated = (move?
+					setGameState(true, copy.getGameState(), expected) : false);
+			if (updated) {
+				updateNetwork();
+			}
+			change = (copy.isP1Turn() != change);
 			this.selected = change? null : sel;
 		} else {
 			this.selected = sel;
@@ -365,7 +426,7 @@ public class CheckerBoard extends JButton {
 		
 		// Check if the selection is valid
 		this.selectionValid = isValidSelection(
-				game.getBoard(), game.isP1Turn(), selected);
+				copy.getBoard(), copy.isP1Turn(), selected);
 		
 		update();
 	}
