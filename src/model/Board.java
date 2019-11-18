@@ -51,7 +51,9 @@ public class Board {
 	public static final int WHITE_KING = 4 * 1 + 2 * 0 + 1 * 1;
 
 	/** The current state of the board, represented as three integers. */
-	private int[] state;
+	private /*@ spec_public */ int[] state = new int[3];;
+	
+	//@ public invariant state.length == 3; 
 	
 	/**
 	 * Constructs a new checker game board, pre-filled with a new game state.
@@ -80,7 +82,6 @@ public class Board {
 	public void reset() {
 
 		// Reset the state
-		this.state = new int[3];
 		for (int i = 0; i < 12; i ++) {
 			set(i, BLACK_CHECKER);
 			set(31 - i, WHITE_CHECKER);
@@ -138,6 +139,18 @@ public class Board {
 	 * @see {@link #set(int, int, int)}, {@link #EMPTY}, {@link #BLACK_CHECKER},
 	 * {@link #WHITE_CHECKER}, {@link #BLACK_KING}, {@link #WHITE_KING}
 	 */
+	/*@
+	  @ requires !isValidIndex(index);
+	  @ assignable \nothing;
+	  @ also
+	  @ requires isValidIndex(index);
+	  @ requires id < 0;
+	  @ ensures id == EMPTY;
+	  @ also 
+	  @ requires isValidIndex(index);
+	  @ requires id >= 0;
+	  @ ensures id == \old(id);
+	  @*/
 	public void set(int index, int id) {
 		
 		// Out of range
