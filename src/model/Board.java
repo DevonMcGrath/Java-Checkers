@@ -119,6 +119,11 @@ public class Board {
 	 * @see {@link #set(int, int)}, {@link #EMPTY}, {@link #BLACK_CHECKER},
 	 * {@link #WHITE_CHECKER}, {@link #BLACK_KING}, {@link #WHITE_KING}
 	 */
+	/*@
+	  @ requires x >= 0 && x <= 7;
+	  @ requires y >= 0 && y <= 7;
+	  @ requires id == BLACK_CHECKER || id == WHITE_CHECKER;
+	  @*/
 	public void set(int x, int y, int id) {
 		set(toIndex(x, y), id);
 	}
@@ -208,6 +213,15 @@ public class Board {
 	 * tile.
 	 * @see {@link #toIndex(Point)}, {@link #toPoint(int)}
 	 */
+	/*@ 
+	  @ requires x >= 0 && x <= 7;
+	  @ requires y >= 0 && y <= 7;
+	  @ requires isValidPoint(toPoint(x, y));
+	  @ ensures \result == y * 4 + x / 2;
+	  @ also
+	  @ requires !isValidPoint(toPoint(x, y));
+	  @ ensures \result == -1;
+	  @*/
 	public static int toIndex(int x, int y) {
 		
 		// Invalid (x, y) (i.e. not in board, or white tile)
@@ -241,6 +255,16 @@ public class Board {
 	 * @return the updated target value with the bit set or cleared.
 	 * @see {@link #getBit(int, int)}
 	 */
+	/*@
+	  @ requires bit < 0 || bit > 31;
+	  @ ensures \result == target;
+	  @ also
+	  @ requires set;
+	  @ ensures \result == (target | (1 << bit));
+	  @ also
+	  @ requires !set;
+	  @ ensures \result == (target & (~(1 << bit)));
+	  @*/
 	public static int setBit(int target, int bit, boolean set) {
 		
 		// Nothing to do
@@ -347,7 +371,14 @@ public class Board {
 	 * @param testIndex	the index to check.
 	 * @return true if and only if the index is between 0 and 31 inclusive.
 	 */
-	public static boolean isValidIndex(int testIndex) {
+	/*@
+	  @ requires testIndex >= 0 && testIndex < 32;
+	  @ ensures \result == true;
+	  @ also
+	  @ requires testIndex < 0 || testIndex >= 32;
+	  @ ensures \result == false;
+	  @*/
+	public /*@ pure */ static boolean isValidIndex(int testIndex) {
 		return testIndex >= 0 && testIndex < 32;
 	}
 	
@@ -358,7 +389,7 @@ public class Board {
 	 * @return true if and only if the point is on the board, specifically on
 	 * a black tile.
 	 */
-	public static boolean isValidPoint(Point testPoint) {
+	public /*@ pure */static boolean isValidPoint(Point testPoint) {
 		
 		if (testPoint == null) {
 			return false;
@@ -376,6 +407,10 @@ public class Board {
 		}
 		
 		return true;
+	}
+	
+	public /*@ pure */ static Point toPoint(int x, int y) {
+		return new Point(x, y);
 	}
 	
 	@Override
