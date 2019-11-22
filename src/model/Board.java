@@ -51,9 +51,11 @@ public class Board {
 	public static final int WHITE_KING = 4 * 1 + 2 * 0 + 1 * 1;
 
 	/** The current state of the board, represented as three integers. */
-	private /*@ spec_public */ int[] state = new int[3];;
+	private /*@ spec_public */ int[] state = new int[3];
 	
-	//@ public invariant state.length == 3; 
+	//@ public invariant state.length == 3;
+	
+	//@ public initially (\forall int i; 0 <= i && i < 12; get(i) == BLACK_CHECKER && get(31 - i) == WHITE_CHECKER);
 	
 	/**
 	 * Constructs a new checker game board, pre-filled with a new game state.
@@ -96,6 +98,17 @@ public class Board {
 	 * @return a list of points on the board with the specified ID. If none
 	 * exist, an empty list is returned.
 	 */
+	/*@
+	  @ requires id == BLACK_CHECKER || id == WHITE_CHECKER || id == BLACK_KING || id == WHITE_KING;
+	  @ ensures (\exists int k; 0 <= k && k < 32; (get(k) == id)) ==> \result.size() > 0;
+	  @ ensures (\forall int i; 0 <= i && i < 32; 
+	  				(get(i) == id) ==>  
+		  				(
+		  					\exists int j; 0 <= j && j < \result.size(); 
+		  						 \result.get(j).equals(toPoint(i))
+		  				)
+	  			);
+	  @*/
 	public List<Point> find(int id) {
 		
 		// Find all black tiles with matching IDs
@@ -139,17 +152,35 @@ public class Board {
 	 * @see {@link #set(int, int, int)}, {@link #EMPTY}, {@link #BLACK_CHECKER},
 	 * {@link #WHITE_CHECKER}, {@link #BLACK_KING}, {@link #WHITE_KING}
 	 */
-	/*@
+	/*@ 
 	  @ requires !isValidIndex(index);
 	  @ assignable \nothing;
 	  @ also
 	  @ requires isValidIndex(index);
 	  @ requires id < 0;
+	  @ assignable state;
 	  @ ensures id == EMPTY;
 	  @ also 
 	  @ requires isValidIndex(index);
 	  @ requires id >= 0;
+	  @ assignable state;
 	  @ ensures id == \old(id);
+	  @ also
+	  @ requires isValidIndex(index);
+	  @ assignable state;
+	  @ ensures (\forall int i; 0 <= i && i < 3;
+	  @ 				(
+	  @		  				(((1 << (state.length - i - 1)) & id) != 0) == true 
+	  @		  					&& 
+	  @		  				state[i] == setBit(state[i], index, true)
+	  @	  				)
+	  @				||
+	  @					(
+	  @						(((1 << (state.length - i - 1)) & id) != 0) == false 
+	  @							&& 
+	  @						state[i] == setBit(state[i], index, false)
+	  @					)
+	  @			);
 	  @*/
 	public void set(int index, int id) {
 		
@@ -193,7 +224,15 @@ public class Board {
 	 * @see {@link #get(int, int)}, {@link #set(int, int)},
 	 * {@link #set(int, int, int)}
 	 */
-	public int get(int index) {
+	/*@
+	  @ requires !isValidIndex(index);
+	  @ ensures \result == INVALID;
+	  @ also
+	  @ requires isValidIndex(index);
+	  @ ensures \result == getBit(state[0], index) * 4 + getBit(state[1], index) * 2 + getBit(state[2], index);
+	  @ ensures \result == EMPTY || \result == BLACK_CHECKER || \result == WHITE_CHECKER || \result == BLACK_KING || \result == WHITE_KING;
+	  @*/
+	public /*@ pure */ int get(int index) {
 		if (!isValidIndex(index)) {
 			return INVALID;
 		}
@@ -210,7 +249,14 @@ public class Board {
 	 * point (-1, -1) if the index is not between 0 - 31 (inclusive).
 	 * @see {@link #toIndex(int, int)}, {@link #toIndex(Point)}
 	 */
-	public static Point toPoint(int index) {
+	/*@
+	  @ requires !isValidIndex(index);
+	  @ ensures \result.equals(toPoint(-1, -1));
+	  @ also
+	  @ requires isValidIndex(index);
+	  @ ensures \result.equals(toPoint((2 * (index % 4) + ((index / 4) + 1) % 2), index / 4));
+	  @*/
+	public /*@ pure */ static Point toPoint(int index) {
 		int y = index / 4;
 		int x = 2 * (index % 4) + (y + 1) % 2;
 		return !isValidIndex(index)? new Point(-1, -1) : new Point(x, y);
@@ -278,7 +324,7 @@ public class Board {
 	  @ requires !set;
 	  @ ensures \result == (target & (~(1 << bit)));
 	  @*/
-	public static int setBit(int target, int bit, boolean set) {
+	public /*@ pure */ static int setBit(int target, int bit, boolean set) {
 		
 		// Nothing to do
 		if (bit < 0 || bit > 31) {
@@ -306,13 +352,22 @@ public class Board {
 	 * @return 1 if and only if the specified bit is set, 0 otherwise.
 	 * @see {@link #setBit(int, int, boolean)}
 	 */
-	public static int getBit(int target, int bit) {
+	/*@
+	  @ requires bit < 0 || bit > 31;
+	  @ ensures \result == 0;
+	  @ also
+	  @ requires (target & (1 << bit)) == 0;
+	  @ ensures \result == 0;
+	  @ also
+	  @ requires (target & (1 << bit)) != 0;
+	  @ ensures \result == 1;
+	  @*/
+	public /*@ pure */ static int getBit(int target, int bit) {
 		
 		// Out of range
 		if (bit < 0 || bit > 31) {
 			return 0;
 		}
-		
 		return (target & (1 << bit)) != 0? 1 : 0;
 	}
 	
@@ -362,6 +417,16 @@ public class Board {
 	 * or are on a white tile.
 	 * @see {@link #middle(int, int)}, {@link #middle(Point, Point)}
 	 */
+	/*@
+	  @ requires (x1 < 0 || y1 < 0 || x2 < 0 || y2 < 0 || x1 > 7 || y1 > 7 || x2 > 7 || y2 > 7) ||
+	  @			 (x1 % 2 == y1 % 2 || x2 % 2 == y2 % 2) ||
+	  @			 (Math.abs(x2 - x1) != Math.abs(y2 - y1) || Math.abs(x2 - x1) != 2);
+	  @ requires !isValidPoint(toPoint(x1, y1)) || !isValidPoint(toPoint(x2, y2));
+	  @ ensures \result.equals(toPoint(-1, -1));
+	  @ also
+	  @ requires isValidPoint(toPoint(x1, y1)) && isValidPoint(toPoint(x2, y2));
+	  @ ensures \result.equals(toPoint(x1 + (x2 - x1) / 2, y1 + (y2 - y1) / 2));
+	  @*/
 	public static Point middle(int x1, int y1, int x2, int y2) {
 		
 		// Check coordinates
@@ -402,7 +467,18 @@ public class Board {
 	 * @return true if and only if the point is on the board, specifically on
 	 * a black tile.
 	 */
-	public /*@ pure */static boolean isValidPoint(Point testPoint) {
+	/*@
+	  @ requires (testPoint == null) ||
+	  @			 (testPoint.getX() < 0 || testPoint.getX() > 7 || testPoint.getY() < 0 || testPoint.getY() > 7) ||
+	  @			 (testPoint.getX() % 2 == testPoint.getY() % 2);
+	  @ ensures \result == false;
+	  @ also
+	  @ requires (testPoint != null) &&
+	  @			 (testPoint.getX() >= 0 && testPoint.getX() <= 7 && testPoint.getY() >= 0 && testPoint.getY() <= 7) &&
+	  @ 		 (testPoint.getX() % 2 != testPoint.getY() % 2);
+	  @ ensures \result == true;
+	  @*/
+	public /*@ pure */ static boolean isValidPoint(Point testPoint) {
 		
 		if (testPoint == null) {
 			return false;
