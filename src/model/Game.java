@@ -19,14 +19,21 @@ import logic.MoveLogic;
 public class Game {
 
 	/** The current state of the checker board. */
-	private Board board;
+	private /*@ spec_public*/ Board board;
 	
 	/** The flag indicating if it is player 1's turn. */
-	private boolean isP1Turn;
+	private /*@ spec_public*/ boolean isP1Turn;
 	
 	/** The index of the last skip, to allow for multiple skips in a turn. */
-	private int skipIndex;
+	private /*@ spec_public*/ int skipIndex;
 	
+	//@ public initially isP1Turn;
+	
+	/*@
+	  @ ensures isP1Turn;
+	  @ ensures skipIndex == -1;
+	  @ ensures (\forall int i; 0 <= i && i < 12; board.get(i) == Board.BLACK_CHECKER && board.get(31 - i) == Board.WHITE_CHECKER);
+	  @*/
 	public Game() {
 		restart();
 	}
@@ -47,6 +54,11 @@ public class Game {
 	 * 
 	 * @return an exact copy of this game.
 	 */
+	/*@
+	  @ ensures (\forall int i; 0 <= i && i < 3; \result.getBoard().state[i] == board.state[i]);
+	  @ ensures \result.isP1Turn() == isP1Turn();
+	  @ ensures \result.getSkipIndex() == getSkipIndex();
+	  @*/
 	public Game copy() {
 		Game g = new Game();
 		g.board = board.copy();
@@ -58,6 +70,11 @@ public class Game {
 	/**
 	 * Resets the game of checkers to the initial state.
 	 */
+	/*@
+	  @ ensures isP1Turn;
+	  @ ensures skipIndex == -1;
+	  @ ensures (\forall int i; 0 <= i && i < 12; board.get(i) == Board.BLACK_CHECKER && board.get(31 - i) == Board.WHITE_CHECKER);
+	  @*/
 	public void restart() {
 		this.board = new Board();
 		this.isP1Turn = true;
@@ -86,7 +103,38 @@ public class Game {
 	 * @param endIndex		the end index of the move.
 	 * @return true if and only if an update was made to the game state.
 	 * @see {@link #move(Point, Point)}
+	 * 
 	 */
+	/*@
+	  @ requires isValidMove(startIndex, endIndex);
+	  @ assignable board, isP1Turn, skipIndex;
+	  @ ensures board.get(startIndex) == Board.EMPTY;
+	  @ ensures Board.isValidIndex(Board.toIndex(Board.middle(startIndex, endIndex))) 
+	  @				==> (board.get(Board.toIndex(Board.middle(startIndex, endIndex))) == Board.EMPTY);
+	  @ ensures (\forall int i; 0 <= i && i < 32;
+	  @				(i != startIndex && i != endIndex && i != getBoardIndexMiddle(startIndex, endIndex))
+	  @					==> (board.get(i) == \old(board).get(i))
+	  @ 		);
+	  @ ensures (getYCoordinate(endIndex) != 0 && getYCoordinate(endIndex) != 7)
+	  @				==> board.get(endIndex) == \old(board.get(startIndex));
+	  @ ensures (getYCoordinate(endIndex) == 0 && \old(board).get(endIndex) == Board.WHITE_CHECKER) 
+	  @				==> board.get(endIndex) == Board.WHITE_KING;
+	  @ ensures (getYCoordinate(endIndex) == 7 && \old(board).get(endIndex) == Board.BLACK_CHECKER) 
+	  @				==> board.get(endIndex) == Board.BLACK_KING;
+	  @ ensures (
+	  @				(isValidIndex(getBoardIndexMiddle(startIndex, endIndex)) && !hasNoSkips(endIndex)) 
+	  @					==> skipIndex == endIndex
+	  @			) 
+	  @			&&
+	  @			(
+	  @				(!isValidIndex(getBoardIndexMiddle(startIndex, endIndex)) || hasNoSkips(endIndex)) 
+	  @					==> isP1Turn == \old(!isP1Turn) && skipIndex == -1
+	  @			);
+	  @ ensures \result == true;
+	  @ also
+	  @ requires !isValidMove(startIndex, endIndex);
+	  @ ensures \result == false;
+	  @*/
 	public boolean move(int startIndex, int endIndex) {
 		
 		// Validate the move
@@ -130,12 +178,36 @@ public class Game {
 		return true;
 	}
 	
+	public /*@ pure */ int getYCoordinate(int index) {
+		return Board.toPoint(index).y;
+	}
+	
+	public /*@ pure */ int getBoardIndexMiddle(int id1, int id2) {
+		return Board.toIndex(Board.middle(id1, id2));
+	}
+	
+	public /*@ pure */ boolean isValidMove(int id1, int id2) {
+		return MoveLogic.isValidMove(this, id1, id2);
+	}
+	
+	public /*@ pure */ boolean isValidIndex(int index) {
+		return Board.isValidIndex(index);
+	}
+	
+	public /*@ pure */ boolean hasNoSkips(int index) {
+		return MoveGenerator.getSkips(board.copy(), index).isEmpty();
+	}
+	
+	public /*@ pure */ boolean hasNoMoves(int index) {
+		return MoveGenerator.getMoves(board.copy(), index).isEmpty();
+	}
+	
 	/**
 	 * Gets a copy of the current board state.
 	 * 
 	 * @return a non-reference to the current game board state.
 	 */
-	public Board getBoard() {
+	public /*@ pure */ Board getBoard() {
 		return board.copy();
 	}
 	
@@ -145,6 +217,24 @@ public class Game {
 	 * 
 	 * @return true if the game is over.
 	 */
+	/*@
+	  @ ensures ((board.find(Board.BLACK_CHECKER).size() + board.find(Board.BLACK_KING).size()) == 0)
+	  @			==> \result == true;
+	  @ ensures ((board.find(Board.WHITE_CHECKER).size() + board.find(Board.WHITE_KING).size()) == 0)
+	  @			==> \result == true;
+	  @ ensures isP1Turn &&
+	  @ 		(\exists int i; 0 <= i && i < 32;
+	  @				(board.get(i) == Board.BLACK_CHECKER || board.get(i) == Board.BLACK_KING)
+	  @				&&
+	  @				(!hasNoMoves(i) || !hasNoSkips(i))
+	  @			) ==> \result == false;
+	  @ ensures !isP1Turn &&
+	  @ 		(\exists int i; 0 <= i && i < 32;
+	  @				(board.get(i) == Board.WHITE_CHECKER || board.get(i) == Board.WHITE_KING)
+	  @				&&
+	  @				(!hasNoMoves(i) || !hasNoSkips(i))
+	  @			) ==> \result == false;
+	  @*/
 	public boolean isGameOver() {
 
 		// Ensure there is at least one of each checker
@@ -173,7 +263,7 @@ public class Game {
 		return true;
 	}
 	
-	public boolean isP1Turn() {
+	public /*@ pure */ boolean isP1Turn() {
 		return isP1Turn;
 	}
 	
@@ -181,7 +271,7 @@ public class Game {
 		this.isP1Turn = isP1Turn;
 	}
 	
-	public int getSkipIndex() {
+	public /*@ pure */ int getSkipIndex() {
 		return skipIndex;
 	}
 	
@@ -192,6 +282,18 @@ public class Game {
 	 * @return a string representing the current game state.
 	 * @see {@link #setGameState(String)}
 	 */
+	/*@
+	  @ ensures (\forall int i; 0 <= i && i < 32; 
+	  @				(0 <= i && i < 32) ==> getIntInStringAt(\result, i) == board.get(i)
+	  @			);
+	  @ ensures getIntInSubstringAt(\result, 33) == skipIndex;
+	  @ also
+	  @ requires isP1Turn;
+	  @ ensures getIntInStringAt(\result, 32) == 1;
+	  @ also
+	  @ requires !isP1Turn;
+	  @ ensures getIntInStringAt(\result, 32) == 0;
+	  @*/
 	public String getGameState() {
 		
 		// Add the game board
@@ -214,6 +316,22 @@ public class Game {
 	 * @param state	the game state.
 	 * @see {@link #getGameState()}
 	 */
+	/*@
+	  @ requires state == null || state.isEmpty();
+	  @ assignable \nothing;
+	  @ also
+	  @ requires state != null && !state.isEmpty();
+	  @ ensures (\forall int i; 0 <= i && i < 32; 
+	  @				(0 <= i && i < 32) ==> getIntInStringAt(state, i) == board.get(i)
+	  @			);
+	  @ ensures getIntInSubstringAt(state, 33) == skipIndex;
+	  @ also
+	  @ requires state != null && !state.isEmpty() && getIntInStringAt(state, 32) == 1;
+	  @ ensures isP1Turn;
+	  @ also
+	  @ requires state != null && !state.isEmpty() && getIntInStringAt(state, 32) == 0;
+	  @ ensures !isP1Turn;
+	  @*/
 	public void setGameState(String state) {
 		
 		restart();
@@ -243,5 +361,13 @@ public class Game {
 				this.skipIndex = -1;
 			}
 		}
+	}
+	
+	public /*@ pure */ int getIntInStringAt(String string, int position) {
+		return Integer.parseInt("" + string.charAt(position));
+	}
+	
+	public /*@ pure */ int getIntInSubstringAt(String string, int start) {
+		return Integer.parseInt(string.substring(start));
 	}
 }

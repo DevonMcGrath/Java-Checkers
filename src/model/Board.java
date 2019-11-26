@@ -81,6 +81,9 @@ public class Board {
 	 * on top and white on the bottom. There are both 12 black checkers and 12
 	 * white checkers.
 	 */
+	/*@
+	  @ ensures (\forall int i; 0 <= i && i < 12; get(i) == BLACK_CHECKER && get(31 - i) == WHITE_CHECKER);
+	  @*/
 	public void reset() {
 
 		// Reset the state
@@ -109,7 +112,7 @@ public class Board {
 		  				)
 	  			);
 	  @*/
-	public List<Point> find(int id) {
+	public /*@ pure */ List<Point> find(int id) {
 		
 		// Find all black tiles with matching IDs
 		List<Point> points = new ArrayList<>();
@@ -259,7 +262,11 @@ public class Board {
 	public /*@ pure */ static Point toPoint(int index) {
 		int y = index / 4;
 		int x = 2 * (index % 4) + (y + 1) % 2;
-		return !isValidIndex(index)? new Point(-1, -1) : new Point(x, y);
+		
+		if (!isValidIndex(index))
+			return new Point(-1, -1);
+		
+		return new Point(x, y);
 	}
 	
 	/**
@@ -300,7 +307,7 @@ public class Board {
 	 * tile.
 	 * @see {@link #toIndex(int, int)}, {@link #toPoint(int)}
 	 */
-	public static int toIndex(Point p) {
+	public /*@ pure */ static int toIndex(Point p) {
 		return (p == null)? -1 : toIndex(p.x, p.y);
 	}
 	
@@ -401,7 +408,7 @@ public class Board {
 	 * or are on a white tile.
 	 * @see {@link #middle(Point, Point)}, {@link #middle(int, int, int, int)}
 	 */
-	public static Point middle(int index1, int index2) {
+	public /*@ pure */ static Point middle(int index1, int index2) {
 		return middle(toPoint(index1), toPoint(index2));
 	}
 	

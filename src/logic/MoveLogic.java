@@ -27,7 +27,7 @@ public class MoveLogic {
 	 * @return true if the move is legal according to the rules of checkers.
 	 * @see {@link #isValidMove(Board, boolean, int, int, int)}
 	 */
-	public static boolean isValidMove(Game game,
+	public /*@ pure */ static boolean isValidMove(Game game,
 			int startIndex, int endIndex) {
 		return game == null? false : isValidMove(game.getBoard(),
 				game.isP1Turn(), startIndex, endIndex, game.getSkipIndex());
