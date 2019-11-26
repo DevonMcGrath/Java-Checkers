@@ -60,6 +60,9 @@ public class Board {
 	/**
 	 * Constructs a new checker game board, pre-filled with a new game state.
 	 */
+	/*@
+	  @ ensures (\forall int i; 0 <= i && i < 12; get(i) == BLACK_CHECKER && get(31 - i) == WHITE_CHECKER);
+	  @*/
 	public Board() {
 		reset();
 	}
@@ -70,6 +73,9 @@ public class Board {
 	 * 
 	 * @return a copy of this checker board.
 	 */
+	/*@
+	  @ ensures (\forall int i; 0 <= i && i < 3; \result.state[i] == state[i]);
+	  @*/
 	public Board copy() {
 		Board copy = new Board();
 		copy.state = state.clone();
@@ -105,12 +111,12 @@ public class Board {
 	  @ requires id == BLACK_CHECKER || id == WHITE_CHECKER || id == BLACK_KING || id == WHITE_KING;
 	  @ ensures (\exists int k; 0 <= k && k < 32; (get(k) == id)) ==> \result.size() > 0;
 	  @ ensures (\forall int i; 0 <= i && i < 32; 
-	  				(get(i) == id) ==>  
-		  				(
-		  					\exists int j; 0 <= j && j < \result.size(); 
-		  						 \result.get(j).equals(toPoint(i))
-		  				)
-	  			);
+	  @				(get(i) == id) ==>  
+	  @	  				(
+	  @	  					\exists int j; 0 <= j && j < \result.size(); 
+	  @	  						 \result.get(j).equals(toPoint(i))
+	  @	  				)
+	  @			);
 	  @*/
 	public /*@ pure */ List<Point> find(int id) {
 		
@@ -214,6 +220,14 @@ public class Board {
 	 * @see {@link #get(int)}, {@link #set(int, int)},
 	 * {@link #set(int, int, int)}
 	 */
+	/*@
+	  @ requires 0 <= x && x <= 7;
+	  @ requires 0 <= y && y <= 7;
+	  @ ensures \result == get(toIndex(x, y));
+	  @ also
+	  @ requires 0 > x || x > 7 || 0 > y || y > 7;
+	  @	ensures \result == INVALID; 
+	  @*/
 	public int get(int x, int y) {
 		return get(toIndex(x, y));
 	}
@@ -288,7 +302,7 @@ public class Board {
 	  @ requires !isValidPoint(toPoint(x, y));
 	  @ ensures \result == -1;
 	  @*/
-	public static int toIndex(int x, int y) {
+	public /*@ pure */ static int toIndex(int x, int y) {
 		
 		// Invalid (x, y) (i.e. not in board, or white tile)
 		if (!isValidPoint(new Point(x, y))) {
