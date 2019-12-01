@@ -50,18 +50,39 @@ public class ComputerPlayer extends Player {
 	/* ------------ */
 
 	@Override
+	/*@
+	  @ also
+	  @ ensures \result == false;
+	  @*/
 	public boolean isHuman() {
 		return false;
 	}
 
 	@Override
+	/*@
+	  @ also
+	  @ requires game == null || game.isGameOver();
+	  @ assignable \nothing;
+	  @ also
+	  @ requires game != null && !game.isGameOver();
+	  @ ensures (\exists int i; 0 <= i && i < getMoves(\old(game).copy()).size();
+	  @				(\exists int j; 0 <= j && j < 32;
+	  @					(
+	  @						\old(game).copy().getBoard().get(j) 
+	  @						== 
+	  @						game.copy().getBoard().get(getMoves(\old(game).copy()).get(i).getEndIndex())
+	  @					) 
+	  @					&& (game.copy().getBoard().get(j) == 0)
+	  @				)
+	  @			);
+	  @*/
 	public void updateGame(Game game) {
 		
 		// Nothing to do
 		if (game == null || game.isGameOver()) {
 			return;
 		}
-			
+		
 		// Get the available moves
 		Game copy = game.copy();
 		List<Move> moves = getMoves(copy);
@@ -94,18 +115,50 @@ public class ComputerPlayer extends Player {
 		}
 	}
 	
+	private  /*@ spec_public pure */ int getCheckerIndex(Game game, int i) {
+		Point p = this.getCheckers(game).get(i);
+		return Board.toIndex(p);
+	}
+	
 	/**
 	 * Gets all the available moves and skips for the current player.
 	 * 
 	 * @param game	the current game state.
 	 * @return a list of valid moves that the player can make.
 	 */
-	private List<Move> getMoves(Game game) {
+	/*@
+	  @ requires game.getSkipIndex() >= 0;
+	  @ ensures (\forall int i; 0 <= i && i < MoveGenerator.getSkips(game.getBoard(), game.getSkipIndex()).size();
+	  @				((Move)\result.get(i)).getEndIndex() ==
+	  @				Board.toIndex(MoveGenerator.getSkips(game.getBoard(), game.getSkipIndex()).get(i))
+	  @				&&
+	  @				((Move)\result.get(i)).getStartIndex() == game.getSkipIndex()
+	  @			);
+	  @ also
+	  @ requires game.getSkipIndex() < 0;
+	  @ requires !this.getAllSkips(game, this.getCheckers(game)).isEmpty();
+	  @ ensures !\result.isEmpty();
+	  @ also
+	  @ requires game.getSkipIndex() < 0;
+	  @ requires this.getAllSkips(game, this.getCheckers(game)).isEmpty();
+	  @ ensures (\forall int i; 0 <= i && i < this.getCheckers(game).size();
+	  @				(\forall int j; 0 <= j && j < MoveGenerator.getMoves(game.getBoard(), this.getCheckerIndex(game, i)).size();
+	  @					(this.getCheckerIndex(game, i) 
+	  @						== ((Move)\result.get(i)).getStartIndex()
+	  @					)
+	  @					&&
+	  @					(Board.toIndex(MoveGenerator.getMoves(game.getBoard(), i).get(j)) 
+	  @						== ((Move)\result.get(i)).getEndIndex()
+	  @					)
+	  @				)
+	  @			);
+	  @*/
+	private /*@ spec_public pure */ List<Move> getMoves(Game game) {
 		
 		// The next move needs to be a skip
 		if (game.getSkipIndex() >= 0) {
 			
-			List<Move> moves = new ArrayList<>();
+			List<Move> moves = new ArrayList<Move>();
 			List<Point> skips = MoveGenerator.getSkips(game.getBoard(),
 					game.getSkipIndex());
 			for (Point end : skips) {
@@ -116,6 +169,39 @@ public class ComputerPlayer extends Player {
 		}
 		
 		// Get the checkers
+		List<Point> checkers = getCheckers(game);
+		
+		List<Move> moves = getAllSkips(game, checkers); 
+		
+		// If there are no skips, add the regular moves
+		if (moves.isEmpty()) {
+			for (Point checker : checkers) {
+				int index = Board.toIndex(checker);
+				Board b = game.getBoard();
+				List<Point> movesEnds = MoveGenerator.getMoves(b, index);
+				for (Point end : movesEnds) {
+					moves.add(new Move(index, Board.toIndex(end)));
+				}
+			}
+		}
+		
+		return moves;
+	}
+	
+	/*@
+	  @ requires game.isP1Turn();
+	  @ ensures \result.size() == getMergedLists(game.getBoard().find(Board.BLACK_CHECKER), game.getBoard().find(Board.BLACK_KING)).size();
+	  @ ensures (\forall int i; 0 <= i && i < getMergedLists(game.getBoard().find(Board.BLACK_CHECKER), game.getBoard().find(Board.BLACK_KING)).size();
+	  @				getMergedLists(game.getBoard().find(Board.BLACK_CHECKER), game.getBoard().find(Board.BLACK_KING)).get(i).equals(\result.get(i))
+	  @			);
+	  @ also
+	  @ requires !game.isP1Turn();
+	  @ ensures \result.size() == getMergedLists(game.getBoard().find(Board.WHITE_CHECKER), game.getBoard().find(Board.WHITE_KING)).size();
+	  @ ensures (\forall int i; 0 <= i && i < getMergedLists(game.getBoard().find(Board.WHITE_CHECKER), game.getBoard().find(Board.WHITE_KING)).size();
+	  @				getMergedLists(game.getBoard().find(Board.WHITE_CHECKER), game.getBoard().find(Board.WHITE_KING)).get(i).equals(\result.get(i))
+	  @			);
+	  @*/
+	private /*@ spec_public pure */ List<Point> getCheckers(Game game) {
 		List<Point> checkers = new ArrayList<>();
 		Board b = game.getBoard();
 		if (game.isP1Turn()) {
@@ -126,8 +212,20 @@ public class ComputerPlayer extends Player {
 			checkers.addAll(b.find(Board.WHITE_KING));
 		}
 		
-		// Determine if there are any skips
+		return checkers;
+	}
+	
+	public /*@ pure */ static List<Point> getMergedLists(List<Point> checkers, List<Point> kings) {
+		List<Point> all = new ArrayList<>();
+		all.addAll(checkers);
+		all.addAll(kings);
+		
+		return all;
+	}
+	
+	private /*@ spec_public pure */ List<Move> getAllSkips(Game game, List<Point> checkers) {
 		List<Move> moves = new ArrayList<>();
+		Board b = game.getBoard();
 		for (Point checker : checkers) {
 			int index = Board.toIndex(checker);
 			List<Point> skips = MoveGenerator.getSkips(b, index);
@@ -135,17 +233,6 @@ public class ComputerPlayer extends Player {
 				Move m = new Move(index, Board.toIndex(end));
 				m.changeWeight(WEIGHT_SKIP);
 				moves.add(m);
-			}
-		}
-		
-		// If there are no skips, add the regular moves
-		if (moves.isEmpty()) {
-			for (Point checker : checkers) {
-				int index = Board.toIndex(checker);
-				List<Point> movesEnds = MoveGenerator.getMoves(b, index);
-				for (Point end : movesEnds) {
-					moves.add(new Move(index, Board.toIndex(end)));
-				}
 			}
 		}
 		
@@ -255,6 +342,12 @@ public class ComputerPlayer extends Player {
 	 * @param isBlack	the flag indicating if black checkers should be observed.
 	 * @return the weight corresponding to how safe the player's checkers are.
 	 */
+	/*@
+	  @ requires isBlack;
+	  @ 
+	  @ also
+	  @ requires !isBlack;
+	  @*/
 	private double getSafetyWeight(Board b, boolean isBlack) {
 		
 		// Get the checkers

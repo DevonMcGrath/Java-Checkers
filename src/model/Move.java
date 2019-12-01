@@ -35,7 +35,7 @@ public class Move {
 		setEndIndex(Board.toIndex(end));
 	}
 	
-	public int getStartIndex() {
+	public /*@ pure */ int getStartIndex() {
 		return startIndex;
 	}
 	
@@ -43,7 +43,7 @@ public class Move {
 		this.startIndex = (byte) startIndex;
 	}
 	
-	public int getEndIndex() {
+	public /*@ pure */ int getEndIndex() {
 		return endIndex;
 	}
 	

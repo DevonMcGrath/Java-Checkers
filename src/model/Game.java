@@ -59,7 +59,7 @@ public class Game {
 	  @ ensures \result.isP1Turn() == isP1Turn();
 	  @ ensures \result.getSkipIndex() == getSkipIndex();
 	  @*/
-	public Game copy() {
+	public /*@ pure */ Game copy() {
 		Game g = new Game();
 		g.board = board.copy();
 		g.isP1Turn = isP1Turn;
@@ -235,7 +235,7 @@ public class Game {
 	  @				(!hasNoMoves(i) || !hasNoSkips(i))
 	  @			) ==> \result == false;
 	  @*/
-	public boolean isGameOver() {
+	public /*@ pure */ boolean isGameOver() {
 
 		// Ensure there is at least one of each checker
 		List<Point> black = board.find(Board.BLACK_CHECKER);
