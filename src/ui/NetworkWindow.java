@@ -38,7 +38,7 @@ public class NetworkWindow extends JFrame {
 	private static final long serialVersionUID = -3680869784531557351L;
 	
 	/** The default width for the network window. */
-	public static final int DEFAULT_WIDTH = 400;
+	public static final int DEFAULT_WIDTH = 480;
 	
 	/** The default height for the network window. */
 	public static final int DEFAULT_HEIGHT = 140;

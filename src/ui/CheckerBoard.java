@@ -307,7 +307,7 @@ public class CheckerBoard extends JButton {
 		g.fillRect(W / 2 - width / 2 - 5, OFFSET_Y + 8 * BOX_SIZE + 2,
 				width + 10, 15);
 		g.setColor(front);
-		g.drawString(msg, W / 2 - width / 2, OFFSET_Y + 8 * BOX_SIZE + 2 + 11);
+		g.drawString(msg, W / 2 - width / 2, OFFSET_Y + 8 * BOX_SIZE + 2 + 12);
 		
 		// Draw a game over sign
 		if (isGameOver) {

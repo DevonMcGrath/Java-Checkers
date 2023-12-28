@@ -44,7 +44,7 @@ public class Main {
 
 	public static void main(String[] args) {
 		
-		//Set the look and feel to the OS look and feel
+		// Set the look and feel to the OS look and feel
 		try {
 			UIManager.setLookAndFeel(
 					UIManager.getSystemLookAndFeelClassName());
