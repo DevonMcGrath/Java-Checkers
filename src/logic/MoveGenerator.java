@@ -138,8 +138,7 @@ public class MoveGenerator {
 			return false;
 		} else if (midID == Board.INVALID || midID == Board.EMPTY) {
 			return false;
-		} else if ((midID == Board.BLACK_CHECKER || midID == Board.BLACK_KING)
-				^ (id == Board.WHITE_CHECKER || id == Board.WHITE_KING)) {
+		} else if (Board.isBlackChecker(midID) ^ Board.isWhiteChecker(id)) {
 			return false;
 		}
 		
@@ -157,7 +156,7 @@ public class MoveGenerator {
 	public static void addPoints(List<Point> points, Point p, int id, int delta) {
 		
 		// Add points moving down
-		boolean isKing = (id == Board.BLACK_KING || id == Board.WHITE_KING);
+		boolean isKing = Board.isKingChecker(id);
 		if (isKing || id == Board.BLACK_CHECKER) {
 			points.add(new Point(p.x + delta, p.y + delta));
 			points.add(new Point(p.x - delta, p.y + delta));

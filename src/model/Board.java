@@ -377,6 +377,39 @@ public class Board {
 		
 		return true;
 	}
+
+	/**
+	 * Checks if the specified ID is for a black checker.
+	 * 
+	 * @param id	the ID to check.
+	 * @return true if the ID corresponds to a {@link #BLACK_CHECKER} or
+	 * a {@link #BLACK_KING} checker.
+	 */
+	public static boolean isBlackChecker(int id) {
+		return id == Board.BLACK_CHECKER || id == Board.BLACK_KING;
+	}
+
+	/**
+	 * Checks if the specified ID is for a white checker.
+	 * 
+	 * @param id	the ID to check.
+	 * @return true if the ID corresponds to a {@link #WHITE_CHECKER} or
+	 * a {@link #WHITE_KING} checker.
+	 */
+	public static boolean isWhiteChecker(int id) {
+		return id == Board.WHITE_CHECKER || id == Board.WHITE_KING;
+	}
+
+	/**
+	 * Checks if the specified ID is for a king checker.
+	 * 
+	 * @param id	the ID to check.
+	 * @return true if the ID corresponds to a {@link #BLACK_KING} checker or
+	 * a {@link #WHITE_KING} checker.
+	 */
+	public static boolean isKingChecker(int id) {
+		return id == Board.BLACK_KING || id == Board.WHITE_KING;
+	}
 	
 	@Override
 	public String toString() {

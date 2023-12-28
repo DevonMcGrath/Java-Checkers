@@ -88,9 +88,8 @@ public class MoveLogic {
 		
 		// Check if proper ID
 		int id = board.get(startIndex);
-		if ((isP1Turn && id != Board.BLACK_CHECKER && id != Board.BLACK_KING)
-				|| (!isP1Turn && id != Board.WHITE_CHECKER
-				&& id != Board.WHITE_KING)) {
+		if ((isP1Turn && !Board.isBlackChecker(id))
+				|| (!isP1Turn && !Board.isWhiteChecker(id))) {
 			return false;
 		}
 		
@@ -98,9 +97,8 @@ public class MoveLogic {
 		Point middle = Board.middle(startIndex, endIndex);
 		int midID = board.get(Board.toIndex(middle));
 		if (midID != Board.INVALID && ((!isP1Turn &&
-				midID != Board.BLACK_CHECKER && midID != Board.BLACK_KING) ||
-				(isP1Turn && midID != Board.WHITE_CHECKER &&
-				midID != Board.WHITE_KING))) {
+				!Board.isBlackChecker(midID)) ||
+				(isP1Turn && !Board.isWhiteChecker(midID)))) {
 			return false;
 		}
 		
@@ -190,7 +188,7 @@ public class MoveLogic {
 		}
 		
 		// Determine if it can be skipped
-		boolean isBlack = (id == Board.BLACK_CHECKER || id == Board.BLACK_KING);
+		boolean isBlack = Board.isBlackChecker(id);
 		List<Point> check = new ArrayList<>();
 		MoveGenerator.addPoints(check, checker, Board.BLACK_KING, 1);
 		for (Point p : check) {
@@ -203,17 +201,15 @@ public class MoveLogic {
 			}
 			
 			// Check ID
-			boolean isWhite = (tid == Board.WHITE_CHECKER ||
-					tid == Board.WHITE_KING);
+			boolean isWhite = Board.isWhiteChecker(tid);
 			if (isBlack && !isWhite) {
 				continue;
 			}
-			boolean isKing = (tid == Board.BLACK_KING || tid == Board.BLACK_KING);
 			
 			// Determine if valid skip direction
 			int dx = (checker.x - p.x) * 2;
 			int dy = (checker.y - p.y) * 2;
-			if (!isKing && (isWhite ^ (dy < 0))) {
+			if (!Board.isKingChecker(tid) && (isWhite ^ (dy < 0))) {
 				continue;
 			}
 			int endIndex = Board.toIndex(new Point(p.x + dx, p.y + dy));

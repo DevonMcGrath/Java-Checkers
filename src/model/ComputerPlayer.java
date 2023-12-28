@@ -198,8 +198,6 @@ public class ComputerPlayer extends Player {
 		Board b = game.getBoard();
 		boolean changed = game.isP1Turn();
 		boolean safeBefore = MoveLogic.isSafe(b, start);
-		int id = b.get(startIndex);
-		boolean isKing = (id == Board.BLACK_KING || id == Board.WHITE_KING);
 		
 		// Set the initial weight
 		m.changeWeight(getSafetyWeight(b, game.isP1Turn()));
@@ -211,8 +209,8 @@ public class ComputerPlayer extends Player {
 		}
 		b = game.getBoard();
 		changed = (changed != game.isP1Turn());
-		id = b.get(endIndex);
-		isKing = (id == Board.BLACK_KING || id == Board.WHITE_KING);
+		int id = b.get(endIndex);
+		boolean isKing = Board.isKingChecker(id);
 		boolean safeAfter = true;
 		
 		// Determine if a skip could be made on next move
@@ -272,11 +270,10 @@ public class ComputerPlayer extends Player {
 		for (Point checker : checkers) {
 			int index = Board.toIndex(checker);
 			int id = b.get(index);
-			boolean isKing = (id == Board.BLACK_KING || id == Board.WHITE_KING);
 			if (MoveLogic.isSafe(b, checker)) {
 				weight += SAFE;
 			} else {
-				weight += UNSAFE * (isKing? KING_FACTOR : 1);
+				weight += UNSAFE * (Board.isKingChecker(id)? KING_FACTOR : 1);
 			}
 		}
 		

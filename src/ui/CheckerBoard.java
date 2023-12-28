@@ -290,8 +290,8 @@ public class CheckerBoard extends JButton {
 				}
 				
 				// Any king (add some extra highlights)
-				if (id == Board.BLACK_KING || id == Board.WHITE_KING) {
-					g.setColor(new Color(255, 240,0));
+				if (Board.isKingChecker(id)) {
+					g.setColor(new Color(255, 240, 0));
 					g.drawOval(cx - 1, cy - 2, CHECKER_SIZE, CHECKER_SIZE);
 					g.drawOval(cx + 1, cy, CHECKER_SIZE - 4, CHECKER_SIZE - 4);
 				}
@@ -447,8 +447,7 @@ public class CheckerBoard extends JButton {
 		int i = Board.toIndex(selected), id = b.get(i);
 		if (id == Board.EMPTY || id == Board.INVALID) { // no checker here
 			return false;
-		} else if(isP1Turn ^ (id == Board.BLACK_CHECKER ||
-				id == Board.BLACK_KING)) { // wrong checker
+		} else if(isP1Turn ^ Board.isBlackChecker(id)) { // wrong checker
 			return false;
 		} else if (!MoveGenerator.getSkips(b, i).isEmpty()) { // skip available
 			return true;
